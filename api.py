@@ -10,4 +10,5 @@
 #wow this project is going to be interesting
 
 x = range(7)
-print(x)
+for y in x:
+	print(y)
