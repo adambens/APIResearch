@@ -27,7 +27,13 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
 ########################################
 CACHE_FNAME = "APIResearch_cache.json"
 
-
+try:
+    cache_file = open(CACHE_FNAME, 'r') # Try to read the data from the file
+    cache_contents = cache_file.read()  # If it's there, get it into a string
+    CACHE_DICTION = json.loads(cache_contents) # And then load it into a dictionary
+    cache_file.close() # Close the file, we're good, we got the data in a dictionary.
+except:
+    CACHE_DICTION = {}
 
 """
 ###################################################################################
@@ -107,16 +113,18 @@ nyt_key = None
 if nyt_key is None: #get token from fb user in order to run this script
     nyt_key = input("\nCopy and paste API Key from https://developer.nytimes.com/\n>  ")
 
-nytbase_url = "https://api.nytimes.com/svc/search/v2/articlesearch.json"
-params = {'api-key': nyt_key, 'q': 'big data',
-           'fq' : "headline(\"Big Data\")",
-           'fl': 'headline, keywords, pub_date, news_desk'}
+for x in range(10):
+    nytbase_url = "https://api.nytimes.com/svc/search/v2/articlesearch.json"
+    params = {'api-key': nyt_key, 'q': 'big data',
+               'fq' : "headline(\"Big Data\")",
+               'fl': 'headline, keywords, pub_date, news_desk',
+               'page': str(x)}
 
-nyt_api =  requests.get(nytbase_url, params = params)
-data = json.loads(nyt_api.text) #type = dictionary
-                                #items in data   #status, copyright, response
+    nyt_api =  requests.get(nytbase_url, params = params)
+    data = json.loads(nyt_api.text) #type = dictionary
+                                    #items in data   #status, copyright, response
 
-print(data['response'])
+    print(data['response'])
 
 
 #new = json.dumps(goodstuff, indent = 4)
