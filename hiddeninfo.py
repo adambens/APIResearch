@@ -3,8 +3,8 @@
 #Adam Benson
 
 #Reddit Information
-my_client_id = '-wAE4hqnRkvxyg'
-my_secret =  'NqvTg3r3erHioJcCkUbOBEznCC8'
+my_client_id = 'YmOW3QU07JFxJQ'
+my_secret =  'A0TbYxNi7L9p3pP1EB5ygRiILGg'
 user_agent = ''
 
 
