@@ -1,4 +1,5 @@
 import json
+import sqlite3
 import urllib.request, urllib.parse, urllib.error
 import facebook
 import requests
@@ -40,8 +41,10 @@ graph = facebook.GraphAPI(access_token)
 events = graph.request("/search?q=Big%20Data&type=event&limit=100") #matching fb events with the words 'Big Data'
 eventslist = events['data']
 uprint(eventslist)
-#eventid = eventsList[1]['id']
+
 for x in eventslist:
+    eventid = x['id']  #event id = unique identifier to access more information on the event
+    uprint(eventid)
     uprint(x['end_time'])
     try:
         y = x['place']
