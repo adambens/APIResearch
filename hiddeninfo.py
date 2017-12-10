@@ -3,9 +3,11 @@
 #Adam Benson
 
 #Reddit Information
-my_client_id = 'YmOW3QU07JFxJQ'
-my_secret =  'A0TbYxNi7L9p3pP1EB5ygRiILGg'
-user_agent = ''
+reddit_id = 'YmOW3QU07JFxJQ'
+reddit_secret =  'A0TbYxNi7L9p3pP1EB5ygRiILGg'
+reddit_username = 'BobCruddles'
+reddit_password = 'Fuckapple1'
+#user_agent = ''
 
 
 #New York Times

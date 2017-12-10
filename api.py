@@ -29,10 +29,18 @@ CACHE_FNAME = "APIResearch_cache.json"
 
 #API #1: Reddit
 print("Welcome to the Reddit Analysis Portion of the project")
-reddit = praw.Reddit(client_id = '',
-                     client_secret = '',
-                     user_agent = '')
+reddit = praw.Reddit(client_id = hiddeninfo.reddit_id,
+                     client_secret = hiddeninfo.reddit_secret,
+                     user_agent = 'APIResearch by /u/BobCruddles',
+                     username = hiddeninfo.reddit_username,
+                     password = hiddeninfo.reddit_password)
+print(reddit.user.me())
+"""
+asubmission = submission.id
+comments = submission.comments.replace_more(limit=0)
+"""
 
+"""
 #API #2: Facebook
 print("Welcome to the Facebook Analysis Portion of the project")
 
@@ -58,7 +66,7 @@ for x in eventslist:
 ###NEXT STEP = access event id to get specific event information
 # Store in Database #attending and #interested
 
-
+"""
 """
 event1 = graph.get_object(id=eventid, fields='attending_count,can_guests_invite,category,cover,declined_count,description,end_time,guest_list_enabled,interested_count,is_canceled,is_page_owned,is_viewer_admin,maybe_count,noreply_count,owner,parent_group,place,ticket_uri,timezone,type,updated_time')
 attenderscount = event1['attending_count']
