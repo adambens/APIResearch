@@ -2,6 +2,7 @@ import json
 import sqlite3
 import urllib.request, urllib.parse, urllib.error
 import facebook
+import praw
 import requests
 import hiddeninfo
 import sys
@@ -9,8 +10,8 @@ import sys
 
 #Adam Benson
 #Final Project
-#Purpose: Using API's to collect interactions on "Big Data"
-#across various platforms. 
+#Purpose: Using API's to collect interactions on "Big Data" across various platforms.
+#Goals: visualize the data to gain insights 
 
 ######## PRINTING FUNCTION FOR CODEC ISSUES #########################################
 def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
@@ -24,11 +25,13 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
 
 ######## SET UP CACHING ################
 ########################################
-
+CACHE_FNAME = "APIResearch_cache.json"
 
 #API #1: Reddit
 print("Welcome to the Reddit Analysis Portion of the project")
-
+reddit = praw.Reddit(client_id = '',
+                     client_secret = '',
+                     user_agent = '')
 
 #API #2: Facebook
 print("Welcome to the Facebook Analysis Portion of the project")
@@ -45,8 +48,8 @@ uprint(eventslist)
 for x in eventslist:
     eventid = x['id']  #event id = unique identifier to access more information on the event
     uprint(eventid)
-    uprint(x['end_time'])
-    try:
+    uprint(x['end_time']) #time of event in formation YYYY-MM-DD + Time
+    try:                    # example 2017-12-19T14:30:00+0100 
         y = x['place']
         uprint(y['location']) #printing event location information if avaliable
     except:
