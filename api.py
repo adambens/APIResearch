@@ -27,6 +27,10 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
 ########################################
 CACHE_FNAME = "APIResearch_cache.json"
 
+
+
+"""
+###################################################################################
 #API #1: Reddit
 print("Welcome to the Reddit Analysis Portion of the project")
 reddit = praw.Reddit(client_id = hiddeninfo.reddit_id,
@@ -34,13 +38,24 @@ reddit = praw.Reddit(client_id = hiddeninfo.reddit_id,
                      user_agent = 'APIResearch by /u/BobCruddles',
                      username = hiddeninfo.reddit_username,
                      password = hiddeninfo.reddit_password)
-print(reddit.user.me())
-"""
-asubmission = submission.id
-comments = submission.comments.replace_more(limit=0)
-"""
+print(reddit.user.me()) #make sure you are accessing your account
+subreddit = reddit.subreddit('bigdata')
+print(subreddit.title)
+for sub in subreddit.top(limit=10):
+    if not sub.stickied:
+        #print(sub.score)
+        #print(sub.id)
+        #print(sub.author)
+        #aredditor = reddit.get_redditor(sub.author)
+        #print(aredditor)
+        #akarma = aredditor.link_karma
+        #print(akarma)
+        #ascore == sub.score
+        #asubmission = sub.id
+        #comments = sub.comments.replace_more(limit=0)
 
-"""
+
+###################################################################################
 #API #2: Facebook
 print("Welcome to the Facebook Analysis Portion of the project")
 
@@ -62,12 +77,17 @@ for x in eventslist:
         uprint(y['location']) #printing event location information if avaliable
     except:
         print("no location avaliable")
+    detailz = graph.get_object(id=eventid, fields = 'attending_count, declined_count, interested_count')
+    #print(type(detailz['attending_count']))  type = 'int'
+    num_attending = detailz['attending_count']
+    num_interested = detailz['interested_count']
+
 
 ###NEXT STEP = access event id to get specific event information
 # Store in Database #attending and #interested
 
-"""
-"""
+
+
 event1 = graph.get_object(id=eventid, fields='attending_count,can_guests_invite,category,cover,declined_count,description,end_time,guest_list_enabled,interested_count,is_canceled,is_page_owned,is_viewer_admin,maybe_count,noreply_count,owner,parent_group,place,ticket_uri,timezone,type,updated_time')
 attenderscount = event1['attending_count']
 declinerscount = event1['declined_count']
@@ -77,8 +97,32 @@ noreplycount = event1['noreply_count']
 attenderscount = event1['attending_count']
 attenders = requests.get("https://graph.facebook.com/v2.7/"+eventid+"/attending?access_token="+access_token+"&limit="+str(attenderscount)) 
 attenders_json = attenders.json()
+"""
 
 #API #3: New York Times
 print("Welcome to the New York Times Analysis Portion of the project")
+params = {}
 
-"""
+nyt_key = None
+if nyt_key is None: #get token from fb user in order to run this script
+    nyt_key = input("\nCopy and paste API Key from https://developer.nytimes.com/\n>  ")
+
+nytbase_url = "https://api.nytimes.com/svc/search/v2/articlesearch.json"
+params = {'api-key': nyt_key, 'q': 'big data',
+           'fq' : "headline(\"Big Data\")",
+           'fl': 'headline, keywords, pub_date, news_desk'}
+
+nyt_api =  requests.get(nytbase_url, params = params)
+data = json.loads(nyt_api.text) #type = dictionary
+                                #items in data   #status, copyright, response
+
+print(data['response'])
+
+
+#new = json.dumps(goodstuff, indent = 4)
+
+
+
+
+#print(new)
+
