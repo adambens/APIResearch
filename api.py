@@ -8,9 +8,10 @@ import sys
 
 #Adam Benson
 #Final Project
-#Purpose: Using API's to collect posts on "Big Data"
+#Purpose: Using API's to collect interactions on "Big Data"
+#across various platforms. 
 
-
+######## PRINTING FUNCTION FOR CODEC ISSUES #########################################
 def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
     enc = file.encoding
     if enc == 'UTF-8':
@@ -18,6 +19,12 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
     else:
         f = lambda obj: str(obj).encode(enc, errors='backslashreplace').decode(enc)
         print(*map(f, objects), sep=sep, end=end, file=file)
+#####################################################################################
+
+######## SET UP CACHING ################
+########################################
+
+
 #API #1: Reddit
 print("Welcome to the Reddit Analysis Portion of the project")
 
@@ -26,21 +33,25 @@ print("Welcome to the Reddit Analysis Portion of the project")
 print("Welcome to the Facebook Analysis Portion of the project")
 
 access_token = None
-if access_token is None:
+if access_token is None: #get token from fb user in order to run this script
     access_token = input("\nCopy and paste token from https://developers.facebook.com/tools/explorer\n>  ")
 
 graph = facebook.GraphAPI(access_token)
-events = graph.request("/search?q=Big%20Data&type=event&limit=100")
-eventslist=events['data']
+events = graph.request("/search?q=Big%20Data&type=event&limit=100") #matching fb events with the words 'Big Data'
+eventslist = events['data']
 uprint(eventslist)
 #eventid = eventsList[1]['id']
-
 for x in eventslist:
-	try:
-		y = x['place']
-		uprint(y['location'])
-	except:
-		print("No location avaliable")
+    uprint(x['end_time'])
+    try:
+        y = x['place']
+        uprint(y['location']) #printing event location information if avaliable
+    except:
+        print("no location avaliable")
+
+###NEXT STEP = access event id to get specific event information
+# Store in Database #attending and #interested
+
 
 """
 event1 = graph.get_object(id=eventid, fields='attending_count,can_guests_invite,category,cover,declined_count,description,end_time,guest_list_enabled,interested_count,is_canceled,is_page_owned,is_viewer_admin,maybe_count,noreply_count,owner,parent_group,place,ticket_uri,timezone,type,updated_time')
