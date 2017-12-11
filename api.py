@@ -56,7 +56,7 @@ except:
 ###################################################################################
 #API #1: Reddit
 print("Welcome to the Reddit Analysis Portion of the project")
-"""
+
 reddit = praw.Reddit(client_id = hiddeninfo.reddit_id,
                      client_secret = hiddeninfo.reddit_secret,
                      user_agent = 'APIResearch by /u/BobCruddles',
@@ -82,19 +82,28 @@ def get_subreddit_submissions(subred):
 
 subreddit = get_subreddit_submissions('bigdata') #big data subreddit
 print("subreddit title: ", subreddit.title)
-for sub in subreddit.top(limit=10): #for submission in top 100 submissions in subreddit
+print(type(subreddit))
+count = 0
+for sub in subreddit.top(limit=100): #for submission in top 100 submissions in subreddit
     if not sub.stickied:
+        count += 1
         print('submission score: ', sub.score) #score = likes - dislikes
         #print(sub.id)
         print('submission author: ', sub.author) #author = username
-        #aredditor = reddit.get_redditor(sub.author)
-        #print(aredditor)
+        #print(type(sub.author))
+        y = str(sub.author)
+        #print(y)
+        aredditor = reddit.redditor(y)
+        try:
+            uprint(aredditor.link_karma)
+        except:
+            print("No Karma")
         #akarma = aredditor.link_karma
         #print(akarma)
         #ascore == sub.score
         #asubmission = sub.id
         #comments = sub.comments.replace_more(limit=0)
-
+#print(count)
 
 ###################################################################################
 #API #2: Facebook
@@ -120,14 +129,19 @@ def get_fb_events(topic):
         fb_cache_file.close()
     return events
 
-eventsl = get_fb_events("Big Data")
+t = input('enter topic: ')
+eventsl = get_fb_events(t)
+#eventsl = get_fb_events("Big Data")
 eventslist = eventsl['data']
 #uprint(eventslist)
 
 for x in eventslist:
     eventid = x['id'] #event id = unique identifier to access more information on the event
     uprint(eventid)
-    uprint('end time: ', x['end_time']) #time of event in formation YYYY-MM-DD + Time
+    try:
+        uprint('end time: ', x['end_time']) #time of event in formation YYYY-MM-DD + Time
+    except:
+        print("No Time Specified")
     try:                    # example 2017-12-19T14:30:00+0100 
         y = x['place']
         uprint('location: ', y['location']) #printing event location information if avaliable
@@ -138,13 +152,13 @@ for x in eventslist:
     num_attending = detailz['attending_count']
     num_interested = detailz['interested_count']
     print('attending: ', num_attending)
+    print('interested: ', num_interested, '\n')
+
 """
-
-
 ###NEXT STEP = access event id to get specific event information
 # Store in Database #attending and #interested
 
-"""
+
 event1 = graph.get_object(id=eventid, fields='attending_count,can_guests_invite,category,cover,declined_count,description,end_time,guest_list_enabled,interested_count,is_canceled,is_page_owned,is_viewer_admin,maybe_count,noreply_count,owner,parent_group,place,ticket_uri,timezone,type,updated_time')
 attenderscount = event1['attending_count']
 declinerscount = event1['declined_count']
@@ -154,7 +168,7 @@ noreplycount = event1['noreply_count']
 attenderscount = event1['attending_count']
 attenders = requests.get("https://graph.facebook.com/v2.7/"+eventid+"/attending?access_token="+access_token+"&limit="+str(attenderscount)) 
 attenders_json = attenders.json()
-"""
+
 
 #API #3: New York Times
 
@@ -169,6 +183,7 @@ if nyt_key is None: #get token from nyt user in order to run this script
 
 
 def get_nyt_articles(subject):
+
     if subject in NYT_CACHE_DICTION:
         print("Cached")
         nyt_api = NYT_CACHE_DICTION[subject]
@@ -211,7 +226,7 @@ for item in subject_articles:
 
 print(keywords_dict)
 
-"""
+
 for x in range(10):
     nytbase_url = "https://api.nytimes.com/svc/search/v2/articlesearch.json"
     params = {'api-key': nyt_key, 'q': 'big data',
