@@ -56,6 +56,7 @@ except:
 ###################################################################################
 ###################################################################################
 #API #1: Reddit
+
 print("Welcome to the Reddit Analysis Portion of the project")
 name = input('Enter Reddit Username: ')
 
@@ -206,18 +207,17 @@ def get_nyt_articles(subject): #creating an API request for NYT articles on a ce
        return NYT_CACHE_DICTION[subject]
     else:
         print("Making new request")
-        data = []
-        x = 0
-        while x < 4: 
-            params = {'page': str(x), 'api-key': nyt_key, 'q': subject,
+        data = list()
+        for x in range(0,10):
+            params = {'page': x, 'api-key': nyt_key, 'q': subject,
                    'fq' : "headline(\"" + str(subject) + "\")",
-                   'fl': 'headline, keywords, pub_date, news_desk',
-                   'offset': x}
+                   'fl': 'headline, keywords, pub_date, news_desk'}
+                   #'offset': x}
         #while x <= 3:
             
             nyt_api =  requests.get(nytbase_url, params = params)
             data.append(json.loads(nyt_api.text))
-            x = x + 1
+            #x = x + 1
             time.sleep(1)
 
             NYT_CACHE_DICTION[subject] = data
