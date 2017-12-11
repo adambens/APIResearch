@@ -163,17 +163,17 @@ print("Welcome to the New York Times Analysis Portion of the project")
 nytbase_url = "https://api.nytimes.com/svc/search/v2/articlesearch.json"
 params = {}
 nyt_key = None
-if nyt_key is None: #get token from fb user in order to run this script
+if nyt_key is None: #get token from nyt user in order to run this script
     nyt_key = input("\nCopy and paste API Key from https://developer.nytimes.com/\n>  ")
 
 
 
 def get_nyt_articles(subject):
     if subject in NYT_CACHE_DICTION:
-        print("cached")
+        print("Cached")
         nyt_api = NYT_CACHE_DICTION[subject]
     else:
-        print("making new request")
+        print("Making new request")
         params = {'api-key': nyt_key, 'q': subject,
                'fq' : "headline(\"Big Data\")",
                'fl': 'headline, keywords, pub_date, news_desk'}
@@ -199,14 +199,17 @@ keywords_dict = {}
 for item in subject_articles:
     headline = item["headline"]["main"]
     print(headline)
-    #publication_date = item["pub_date"]
-    #news_section = item["new_desk"]
-    #keywords_list = item["keywords"]
-    #for piece in keywords_list:
-    #    words = piece['value']
-    #    keywords_dict[words] = keywords_dict.get(words, 0) + 1
+    publication_date = item.get("pub_date", "Date Unavaliable")
+    print(publication_date)
+    news_section = item.get("new_desk", "Section Unavaliable")
+    print(news_section)
+    keywords_list = item["keywords"]
+    if len(keywords_list) != 0:
+        for piece in keywords_list:
+            words = piece['value']
+            keywords_dict[words] = keywords_dict.get(words, 0) + 1
 
-#print(keywords_dict)
+print(keywords_dict)
 
 """
 for x in range(10):
@@ -219,21 +222,11 @@ for x in range(10):
     nyt_api =  requests.get(nytbase_url, params = params)
     data = json.loads(nyt_api.text) #type = dictionary
                                     #items in data   #status, copyright, response
-
-  
     print(data['response'])
-
-"""
-
-#new = json.dumps(goodstuff, indent = 4)
-
-"""
+###########################################################
     graph = facebook.GraphAPI(access_token)
     params = {'q': 'Big Data', 'type': 'Event', 'limit': '100'} 
     events = graph.request("/search?", params) #matching fb events with the words 'Big Data'
     eventslist = events['data']
     uprint(eventslist)
 """
-
-
-#print(new)
