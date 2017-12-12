@@ -24,7 +24,6 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
         f = lambda obj: str(obj).encode(enc, errors='backslashreplace').decode(enc)
         print(*map(f, objects), sep=sep, end=end, file=file) 
 #####################################################################################
-
 ######## SET UP CACHING ################
 ########################################
 FB_CACHE = "fbAPIResearch_cache.json"
@@ -54,9 +53,16 @@ try:
     NYT_CACHE_DICTION = json.loads(nyt_cache_contents) # And then load it into a dictionary
 except:
     NYT_CACHE_DICTION = {}
+
 ###################################################################################
 ###################################################################################
+"""
 #API #1: Reddit
+#This portion requires that a USER has a Reddit account
+#User must generate client information via Reddit account
+#Enter user information when prompted to
+#This function will retrieve up to 100 of the top non-stickied submissions of the specified subreddit
+#I was interested in 'bigdata', but wrote this function to match any existing subreddit
 
 print("Welcome to the Reddit Analysis Portion of the project")
 name = input('Enter Reddit Username: ')
@@ -91,7 +97,7 @@ def get_subreddit_submissions(subred): #retrieve submissions for subreddit
     else:
         print("Making New Request")
         response = reddit.subreddit(subred)
-        x = response.top(limit=100) #REMEMBER TO CHANGE BACK TO 100, decreased for testing reasons
+        x = response.top(limit=100) 
         REDDIT_CACHE_DICTION[subred] = x
         reddit_cache_file = open(REDDIT_CACHE, 'w')
         reddit_cache_file.write(str(REDDIT_CACHE_DICTION))
@@ -144,12 +150,17 @@ for sub in subreddit: #for submission in top 100 submissions in specified subred
 print(count)
 conn.commit()
 
-
+"""
 ###################################################################################
 ###################################################################################
 ###################################################################################
 #API #2: Facebook
-
+# This portion requires that the USER generates an access token from facebook
+# Enter token when prompted
+# When prompted, type in search query for Events that you are interested in.
+# Again, I was interested in ' Big Data', however, I wrote the function so that it matches events to any search queries
+# This function will return data, including lat and longitude, of up to  facebook 100 events
+# Note that not all search queries will yield 100 events
 print("Welcome to the Facebook Analysis Portion of the project")
 
 access_token = None
@@ -174,7 +185,7 @@ def get_fb_events(topic):
         return FB_CACHE_DICTION[topic]
 
 t = input("Enter Topic 'ex: Big Data' : ")
-eventsl = get_fb_events(t)
+eventsl = get_fb_events(t) #dictionary of facebook events results for query
 #print(type(eventsl)) #type dict
 eventslist = eventsl['data']
 #eventlist = json.dumps(eventslist, indent= 4)
@@ -183,12 +194,12 @@ eventslist = eventsl['data']
 ###################################################################################
 conn = sqlite3.connect('FB_APIandDB.sqlite')
 cur = conn.cursor()
-cur.execute('DROP TABLE IF EXISTS Events')
-cur.execute('CREATE TABLE Events (event_date DATETIME, description TEXT, attending INTEGER, city TEXT, country TEXT, declined INTEGER, interested INTEGER, eventid INTEGER PRIMARY KEY, latitude REAL, longitude REAL)')
+cur.execute('DROP TABLE IF EXISTS DEvents')
+cur.execute('CREATE TABLE DEvents (event_date DATETIME, description TEXT, attending INTEGER, city TEXT, country TEXT, declined INTEGER, interested INTEGER, eventid INTEGER PRIMARY KEY, latitude REAL, longitude REAL)')
 ###################################################################################
 #CREATE DICTIONARY TO STORE RESULTS
 
-for x in eventslist:
+for x in eventslist: #For all the events that match the search query
     eventid = x['id'] #event id = unique identifier to access more information on the event
     #uprint(eventid)
     eventname = x['name']
@@ -223,13 +234,18 @@ for x in eventslist:
     #print('interested: ', num_interested)
     #print('declined: ', num_declined, '\n')
     events_info = (starttime, description, num_attending, city, country, num_declined, num_interested, eventid, lat, longitude)
-    cur.execute('INSERT or IGNORE INTO Events VALUES (?,?,?,?,?,?,?,?,?,?)', events_info)
+    cur.execute('INSERT or IGNORE INTO DEvents VALUES (?,?,?,?,?,?,?,?,?,?)', events_info)
 
-conn.commit()
+conn.commit() 
 
 ###################################################################################
 ###################################################################################
 #API #3: New York Times
+# Matches articles based on a user entered query
+# NYT requires USER generates an access key via NYTS
+# Enter article search query when prompted
+# Process returns useful meta-data about articles
+"""
 print("Welcome to the New York Times Analysis Portion of the project")
 
 
@@ -269,7 +285,7 @@ def get_nyt_articles(subject): #creating an API request for NYT articles on a ce
 
 subj = input("Enter Search Query: ")
 articles = (get_nyt_articles(subj))
-uprint(articles)  #type(articles) = LIST
+#uprint(articles)  #type(articles) = LIST
 #uprint(articles)
 #print(len(articles[2]['docs']))
 #s = json.dumps(articles, indent = 4)
@@ -279,7 +295,11 @@ uprint(articles)  #type(articles) = LIST
 conn = sqlite3.connect('NYT_APIandDB.sqlite')
 cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Articles')
+cur.execute('DROP TABLE IF EXISTS Keywords')
+cur.execute('DROP TABLE IF EXISTS Sections')
 cur.execute('CREATE TABLE Articles (date_published DATETIME, headline TEXT, query TEXT, section TEXT)')
+cur.execute('CREATE TABLE Keywords (keyword TEXT, value INTEGER)')
+cur.execute('CREATE TABLE Sections (section TEXT, value INTEGER)')
 ###################################################################################
 
 
@@ -291,7 +311,7 @@ s = str(stories)
 ss = re.findall('headline', s)
 print(len(ss))
 
-#Add Variable for Total Hits
+#Potential to add Variable for Total Hits
 
 keywords_dict = {}
 sections_dict = {}
@@ -318,7 +338,9 @@ conn.commit()
 sorted_keywords = [(a, keywords_dict[a]) for a in sorted(keywords_dict,
                     key = keywords_dict.get, reverse = True)]
 for k, v in sorted_keywords:
-    print(k, v)
+    #print(k, v)
+    g = (k,v)
+    cur.execute('INSERT or IGNORE INTO Keywords VALUES (?,?)', g)
 
 sorted_sections = [(a, sections_dict[a]) for a in sorted(sections_dict,
                     key = sections_dict.get, reverse = True)]
@@ -326,8 +348,9 @@ print('\n')
 
 for c, d in sorted_sections:
     print(c, d)
-
+    b = (c,d)
+    cur.execute('INSERT or IGNORE INTO Sections VALUES (?,?)', b)
 #printing sections based on value
-
+"""
 ###############################################################
 ###########################################################
