@@ -334,8 +334,6 @@ for item in stories:
     cur.execute('INSERT or IGNORE INTO Articles VALUES (?,?,?,?)', stories_info)
 #print(keywords_dict)
 #print(sections_dict)
-conn.commit()
-
 sorted_keywords = [(a, keywords_dict[a]) for a in sorted(keywords_dict,
                     key = keywords_dict.get, reverse = True)]
 for k, v in sorted_keywords:
@@ -352,6 +350,7 @@ for c, d in sorted_sections:
     b = (c,d)
     cur.execute('INSERT or IGNORE INTO Sections VALUES (?,?)', b)
 #printing sections based on value
+conn.commit()
 
 ###############################################################
 ###########################################################
