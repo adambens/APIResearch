@@ -9,9 +9,10 @@ import sys
 import datetime
 import time
 import re
+
 #Adam Benson
 #Final Project
-#Purpose: Using API's to collect interactions on "Big Data" across various platforms.
+#Purpose: Using API's to collect interactions on various platforms.
 #Goals: visualize the data to gain insights 
 
 ######## PRINTING FUNCTION FOR CODEC ISSUES #########################################
@@ -21,7 +22,7 @@ def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
         print(*objects, sep=sep, end=end, file=file)
     else:
         f = lambda obj: str(obj).encode(enc, errors='backslashreplace').decode(enc)
-        print(*map(f, objects), sep=sep, end=end, file=file)
+        print(*map(f, objects), sep=sep, end=end, file=file) 
 #####################################################################################
 
 ######## SET UP CACHING ################
@@ -61,7 +62,7 @@ print("Welcome to the Reddit Analysis Portion of the project")
 name = input('Enter Reddit Username: ')
 
 ##Set Up Reddit Instance with user information
-if name == 'BobCruddles':
+if name == 'BobCruddles':  #Using personal information for my account
     reddit = praw.Reddit(client_id = hiddeninfo.reddit_id,
                          client_secret = hiddeninfo.reddit_secret,
                          user_agent = 'APIResearch by /u/BobCruddles',
@@ -90,7 +91,7 @@ def get_subreddit_submissions(subred): #retrieve submissions for subreddit
     else:
         print("Making New Request")
         response = reddit.subreddit(subred)
-        x = response.top(limit=100)
+        x = response.top(limit=100) #REMEMBER TO CHANGE BACK TO 100, decreased for testing reasons
         REDDIT_CACHE_DICTION[subred] = x
         reddit_cache_file = open(REDDIT_CACHE, 'w')
         reddit_cache_file.write(str(REDDIT_CACHE_DICTION))
@@ -100,34 +101,55 @@ def get_subreddit_submissions(subred): #retrieve submissions for subreddit
 redditinput = input("Enter subreddit 'ex)bigdata' : ")
 subreddit = get_subreddit_submissions(redditinput) #big data subreddit
 #print("subreddit title: ", subreddit.title)
-print(type(subreddit))
+print(type(subreddit)) #type = praw_object
 count = 0
 
-for sub in subreddit: #for submission in top 100 submissions in subreddit
-    if not sub.stickied:
+###################################################################################
+#CREATING REDDIT DB
+
+conn = sqlite3.connect('Reddit_APIandDB.sqlite')
+cur = conn.cursor()
+cur.execute('DROP TABLE IF EXISTS Submissions')
+cur.execute('CREATE TABLE Submissions (subid TEXT PRIMARY KEY, title TEXT, score INTEGER, comments INTEGER, creation_date DATETIME, author TEXT, author_karma INTEGER)')
+
+#could create another table for the author's information
+###################################################################################
+
+for sub in subreddit: #for submission in top 100 submissions in specified subreddit
+    if not sub.stickied: #for submissions that are not "stickied"
         count += 1
-        print('total comments: ', type(sub.num_comments))
-        total_comments = sub.num_comments
-        print('submission created at: ', type(sub.created_utc))
-        submission_date = sub.created_utc
-        print('submission score: ', type(sub.score)) #score = likes - dislikes
+        subid = sub.id
+        subtitle = sub.title
         submission_score = sub.score
-        #print(sub.id)
-        print('submission author: ', type(sub.author)) #author = username
-        submission_author = sub.author
-        #print(type(sub.author))
-        y = str(sub.author)
-        aredditor = reddit.redditor(y)
+        total_comments = sub.num_comments
+        sdate = sub.created_utc
+        submission_date = datetime.datetime.utcfromtimestamp(sdate)
+        submission_author = str(sub.author)
+        uprint('submission_title: ', type(subtitle), subtitle)
+        print('sub_id :', type(subid), subid)
+        print('total comments: ', type(total_comments))
+        print('submission created at: ', type(submission_date), submission_date)
+        print('submission score: ', type(submission_score), submission_score) #score = likes - dislikes
+        print('submission author: ', type(sub.author), submission_author) #author = username
+        aredditor = reddit.redditor(submission_author)
         try:
-            uprint('link karma: ', aredditor.link_karma)
+            authorkarma = aredditor.link_karma
+            uprint('link karma: ', authorkarma)
             print('\n')
         except:
+            authorkarma = 0
             print("No Karma\n")
+        sub_info = [subid, subtitle, sub.score, sub.num_comments, submission_date, submission_author, authorkarma]
+        cur.execute('INSERT or IGNORE INTO Submissions VALUES (?,?,?,?,?,?,?)', sub_info)
 print(count)
+conn.commit()
 
 
 ###################################################################################
+###################################################################################
+###################################################################################
 #API #2: Facebook
+
 print("Welcome to the Facebook Analysis Portion of the project")
 
 access_token = None
@@ -142,50 +164,68 @@ def get_fb_events(topic):
         return events
     else:
         print("making new request")
-        params = { 'q': topic, 'type': 'Event', 'limit': '100'}
-        events = graph.request("/search?", params) #matching fb events with the words 'Big Data' in this project
+        params = { 'q': topic, 'type': 'Event', 'limit': '100', 'time_format': 'U'}
+        events = graph.request("/search?", params) #matching fb events with user input words.  'Big Data' was the original goal in this project
         FB_CACHE_DICTION[topic] = events
         x = json.dumps(FB_CACHE_DICTION)
         fb_cache_file = open(FB_CACHE, 'w')
         fb_cache_file.write(x)
         fb_cache_file.close()
-    return events
+        return FB_CACHE_DICTION[topic]
 
 t = input("Enter Topic 'ex: Big Data' : ")
 eventsl = get_fb_events(t)
-#eventsl = get_fb_events("Big Data")
+#print(type(eventsl)) #type dict
 eventslist = eventsl['data']
 #eventlist = json.dumps(eventslist, indent= 4)
-uprint(eventslist)
+#uprint(eventlist)
 
-
-#DECLARE EVENT STATS VARIABLE???
+###################################################################################
+conn = sqlite3.connect('FB_APIandDB.sqlite')
+cur = conn.cursor()
+cur.execute('DROP TABLE IF EXISTS Events')
+cur.execute('CREATE TABLE Events (event_date DATETIME, description TEXT, attending INTEGER, city TEXT, country TEXT, declined INTEGER, interested INTEGER, eventid INTEGER PRIMARY KEY, latitude REAL, longitude REAL)')
+###################################################################################
+#CREATE DICTIONARY TO STORE RESULTS
 
 for x in eventslist:
     eventid = x['id'] #event id = unique identifier to access more information on the event
-    uprint(eventid)
+    #uprint(eventid)
     eventname = x['name']
     uprint(eventname)
-    try:
-        endtime = x['end_time'] # example 2017-12-19T14:30:00+0100 
-        uprint('end time: ', endtime) #time of event in formation YYYY-MM-DD + Time
-    except:
-        print("No Time Specified")
+    #try:
+    starttime = (x['start_time']) # example 2017-12-19T14:30:00+0100 
+    uprint('start time: ', starttime) #time of event in formation YYYY-MM-DD + Time
+    print(type(starttime))
+    #except:
+    #    starttime = 'None'
+    #    print("No Time Specified")
     try:                    
         place = x['place']
         uprint('location: ', place['location']) #printing event location information if avaliable
+        city = place['location']['city']
+        country = place['location']['country']
+        lat = place['location']['latitude']
+        longitude = place['location']['longitude']
     except:
+        place = 'None'
         print("no location avaliable")
+    try:
+        description = x['description']
+    except:
+        description = 'No Description Avaliable'
     detailz = graph.get_object(id=eventid, fields = 'attending_count, declined_count, interested_count')
     #print(type(detailz['attending_count']))  type = 'int'
     num_attending = detailz['attending_count']
     num_interested = detailz['interested_count']
     num_declined = detailz['declined_count']
-    print('attending: ', num_attending)
-    print('interested: ', num_interested)
-    print('declined: ', num_declined '\n')
+    #print('attending: ', num_attending)
+    #print('interested: ', num_interested)
+    #print('declined: ', num_declined, '\n')
+    events_info = (starttime, description, num_attending, city, country, num_declined, num_interested, eventid, lat, longitude)
+    cur.execute('INSERT or IGNORE INTO Events VALUES (?,?,?,?,?,?,?,?,?,?)', events_info)
 
-
+conn.commit()
 
 ###################################################################################
 ###################################################################################
@@ -208,7 +248,7 @@ def get_nyt_articles(subject): #creating an API request for NYT articles on a ce
     else:
         print("Making new request")
         data = list()
-        for x in range(0,10):
+        for x in range(10):
             params = {'page': x, 'api-key': nyt_key, 'q': subject,
                    'fq' : "headline(\"" + str(subject) + "\")",
                    'fl': 'headline, keywords, pub_date, news_desk'}
@@ -218,7 +258,7 @@ def get_nyt_articles(subject): #creating an API request for NYT articles on a ce
             nyt_api =  requests.get(nytbase_url, params = params)
             data.append(json.loads(nyt_api.text))
             #x = x + 1
-            time.sleep(1)
+            time.sleep(1) #avoid making too many requests during pagnation
 
             NYT_CACHE_DICTION[subject] = data
             dumped_json_cache = json.dumps(NYT_CACHE_DICTION)
@@ -232,9 +272,18 @@ articles = (get_nyt_articles(subj))
 uprint(articles)  #type(articles) = LIST
 #uprint(articles)
 #print(len(articles[2]['docs']))
-#data_articles = json.loads(articles.text)
 #s = json.dumps(articles, indent = 4)
 #print(s)
+
+###################################################################################
+conn = sqlite3.connect('NYT_APIandDB.sqlite')
+cur = conn.cursor()
+cur.execute('DROP TABLE IF EXISTS Articles')
+cur.execute('CREATE TABLE Articles (date_published DATETIME, headline TEXT, query TEXT, section TEXT)')
+###################################################################################
+
+
+
 stories = articles[0]["response"]['docs']
 #print(type(stories), type(articles))
 print(len(stories))
@@ -242,6 +291,7 @@ s = str(stories)
 ss = re.findall('headline', s)
 print(len(ss))
 
+#Add Variable for Total Hits
 
 keywords_dict = {}
 sections_dict = {}
@@ -259,9 +309,11 @@ for item in stories:
         for piece in keywords_list:
             words = piece['value']
             keywords_dict[words] = keywords_dict.get(words, 0) + 1
-
+    stories_info = (publication_date, headline, subj, news_section, )
+    cur.execute('INSERT or IGNORE INTO Articles VALUES (?,?,?,?)', stories_info)
 #print(keywords_dict)
 #print(sections_dict)
+conn.commit()
 
 sorted_keywords = [(a, keywords_dict[a]) for a in sorted(keywords_dict,
                     key = keywords_dict.get, reverse = True)]
@@ -275,29 +327,7 @@ print('\n')
 for c, d in sorted_sections:
     print(c, d)
 
+#printing sections based on value
+
 ###############################################################
-"""
-for x in range(10):
-    nytbase_url = "https://api.nytimes.com/svc/search/v2/articlesearch.json"
-    params = {'api-key': nyt_key, 'q': 'big data',
-               'fq' : "headline(\"Big Data\")",
-               'fl': 'headline, keywords, pub_date, news_desk',
-               'page': str(x)}
-
-    nyt_api =  requests.get(nytbase_url, params = params)
-    data = json.loads(nyt_api.text) #type = dictionary
-                                    #items in data   #status, copyright, response
-    print(data['response'])
-###########################################################
-    graph = facebook.GraphAPI(access_token)
-    params = {'q': 'Big Data', 'type': 'Event', 'limit': '100'} 
-    events = graph.request("/search?", params) #matching fb events with the words 'Big Data'
-    eventslist = events['data']
-    uprint(eventslist)
-"""
-
-"""
-attenders = requests.get("https://graph.facebook.com/v2.7/"+eventid+"/attending?access_token="+access_token+"&limit="+str(attenderscount)) 
-attenders_json = attenders.json()
-"""
 ###########################################################
