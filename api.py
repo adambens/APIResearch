@@ -56,7 +56,7 @@ except:
 
 ###################################################################################
 ###################################################################################
-"""
+
 #API #1: Reddit
 #This portion requires that a USER has a Reddit account
 #User must generate client information via Reddit account
@@ -150,7 +150,7 @@ for sub in subreddit: #for submission in top 100 submissions in specified subred
 print(count)
 conn.commit()
 
-"""
+
 ###################################################################################
 ###################################################################################
 ###################################################################################
@@ -161,6 +161,7 @@ conn.commit()
 # Again, I was interested in ' Big Data', however, I wrote the function so that it matches events to any search queries
 # This function will return data, including lat and longitude, of up to  facebook 100 events
 # Note that not all search queries will yield 100 events
+
 print("Welcome to the Facebook Analysis Portion of the project")
 
 access_token = None
@@ -194,8 +195,8 @@ eventslist = eventsl['data']
 ###################################################################################
 conn = sqlite3.connect('FB_APIandDB.sqlite')
 cur = conn.cursor()
-cur.execute('DROP TABLE IF EXISTS DEvents')
-cur.execute('CREATE TABLE DEvents (event_date DATETIME, description TEXT, attending INTEGER, city TEXT, country TEXT, declined INTEGER, interested INTEGER, eventid INTEGER PRIMARY KEY, latitude REAL, longitude REAL)')
+cur.execute('DROP TABLE IF EXISTS Events')
+cur.execute('CREATE TABLE Events (event_date DATETIME, description TEXT, attending INTEGER, city TEXT, country TEXT, declined INTEGER, interested INTEGER, eventid INTEGER PRIMARY KEY, latitude REAL, longitude REAL)')
 ###################################################################################
 #CREATE DICTIONARY TO STORE RESULTS
 
@@ -234,7 +235,7 @@ for x in eventslist: #For all the events that match the search query
     #print('interested: ', num_interested)
     #print('declined: ', num_declined, '\n')
     events_info = (starttime, description, num_attending, city, country, num_declined, num_interested, eventid, lat, longitude)
-    cur.execute('INSERT or IGNORE INTO DEvents VALUES (?,?,?,?,?,?,?,?,?,?)', events_info)
+    cur.execute('INSERT or IGNORE INTO Events VALUES (?,?,?,?,?,?,?,?,?,?)', events_info)
 
 conn.commit() 
 
@@ -245,7 +246,7 @@ conn.commit()
 # NYT requires USER generates an access key via NYTS
 # Enter article search query when prompted
 # Process returns useful meta-data about articles
-"""
+
 print("Welcome to the New York Times Analysis Portion of the project")
 
 
@@ -351,6 +352,6 @@ for c, d in sorted_sections:
     b = (c,d)
     cur.execute('INSERT or IGNORE INTO Sections VALUES (?,?)', b)
 #printing sections based on value
-"""
+
 ###############################################################
 ###########################################################
