@@ -1,5 +1,7 @@
 import json
 import sqlite3
+import matplotlib.pyplot as plt 
+from wordcloud import WordCloud
 import urllib.request, urllib.parse, urllib.error
 import facebook
 import praw
@@ -118,7 +120,6 @@ cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Submissions')
 cur.execute('CREATE TABLE Submissions (subid TEXT PRIMARY KEY, title TEXT, score INTEGER, comments INTEGER, creation_date DATETIME, author TEXT, author_karma INTEGER)')
 
-#could create another table for the author's information
 ###################################################################################
 
 for sub in subreddit: #for submission in top 100 submissions in specified subreddit
@@ -238,6 +239,10 @@ for x in eventslist: #For all the events that match the search query
     print('\n')
 conn.commit() 
 
+
+###Fb Visualization component
+## Countrys, map! or pie chart for occurences of countries
+
 ###################################################################################
 ###################################################################################
 #API #3: New York Times
@@ -266,7 +271,7 @@ def get_nyt_articles(subject): #creating an API request for NYT articles on a ce
         print("Making new request")
         data = list()
         t = 0
-        for x in range(0,10):
+        for x in range(0,10): #10 results per page. 10 pages = 100 results
             params = {'page':  str(x), 'api-key': nyt_key, 'q': subject,
                    'fq' : "headline(\"" + str(subject) + "\")",
                    'fl': 'headline, keywords, pub_date, news_desk'}
@@ -276,8 +281,11 @@ def get_nyt_articles(subject): #creating an API request for NYT articles on a ce
             nyt_api =  requests.get(nytbase_url, params = params)
             print(type(json.loads(nyt_api.text)))
             #uprint(json.loads(nyt_api.text))
+            #try:
             data.append(json.loads(nyt_api.text))
-
+            #except: 
+                #print('didnt work')
+                #continue
 
             #x = x + 1
             time.sleep(1) #avoid making too many requests during pagnation
@@ -310,6 +318,7 @@ cur.execute('CREATE TABLE Articles (date_published DATETIME, headline TEXT, quer
 cur.execute('CREATE TABLE Keywords (keyword TEXT, value INTEGER)')
 cur.execute('CREATE TABLE Sections (section TEXT, value INTEGER)')
 ###################################################################################
+
 keywords_dict = {}
 sections_dict = {}
 
@@ -359,7 +368,18 @@ for c, d in sorted_sections:
     b = (c,d)
     cur.execute('INSERT or IGNORE INTO Sections VALUES (?,?)', b)
 #printing sections based on value
-conn.commit()
+#conn.commit()
+
+keyword_wordcloud = WordCloud(background_color="white", max_font_size=40, min_font_size = 12, max_words = 100, width = 800, height =800).generate_from_frequencies(keywords_dict)
+#plt.figure.Figure()
+plt.imshow(keyword_wordcloud, interpolation="bilinear")
+plt.axis("off")
+plt.show()
+
+###PLotly Visualiation Component
+#CUR SELECT from Keywords and Sections. For Keywords, create bar chart
+#for Sections, create pie chart
+
 
 ###############################################################
 ###########################################################
