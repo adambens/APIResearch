@@ -124,19 +124,19 @@ cur.execute('CREATE TABLE Submissions (subid TEXT PRIMARY KEY, title TEXT, score
 for sub in subreddit: #for submission in top 100 submissions in specified subreddit
     if not sub.stickied: #for submissions that are not "stickied"
         count += 1
-        subid = sub.id
-        subtitle = sub.title
-        submission_score = sub.score
-        total_comments = sub.num_comments
+        subid = sub.id #type str
+        subtitle = sub.title #type str
+        submission_score = sub.score #type int
+        total_comments = sub.num_comments #type int
         sdate = sub.created_utc
-        submission_date = datetime.datetime.utcfromtimestamp(sdate)
-        submission_author = str(sub.author)
-        uprint('submission_title: ', type(subtitle), subtitle)
-        print('sub_id :', type(subid), subid)
-        print('total comments: ', type(total_comments))
-        print('submission created at: ', type(submission_date), submission_date)
-        print('submission score: ', type(submission_score), submission_score) #score = likes - dislikes
-        print('submission author: ', type(sub.author), submission_author) #author = username
+        submission_date = datetime.datetime.utcfromtimestamp(sdate) #type datetime
+        submission_author = str(sub.author) #from praw.models.reddit
+        uprint('submission_title: ', subtitle)
+        print('sub_id :', subid)
+        print('total comments: ', total_comments)
+        print('submission created at: ', submission_date)
+        print('submission score: ', submission_score) #score = likes - dislikes
+        print('submission author: ', submission_author) #author = username
         aredditor = reddit.redditor(submission_author)
         try:
             authorkarma = aredditor.link_karma
@@ -149,7 +149,6 @@ for sub in subreddit: #for submission in top 100 submissions in specified subred
         cur.execute('INSERT or IGNORE INTO Submissions VALUES (?,?,?,?,?,?,?)', sub_info)
 print(count)
 conn.commit()
-
 
 ###################################################################################
 ###################################################################################
@@ -208,7 +207,7 @@ for x in eventslist: #For all the events that match the search query
     #try:
     starttime = (x['start_time']) # example 2017-12-19T14:30:00+0100 
     uprint('start time: ', starttime) #time of event in formation YYYY-MM-DD + Time
-    print(type(starttime))
+    #print(type(starttime))
     #except:
     #    starttime = 'None'
     #    print("No Time Specified")
@@ -236,7 +235,7 @@ for x in eventslist: #For all the events that match the search query
     #print('declined: ', num_declined, '\n')
     events_info = (starttime, description, num_attending, city, country, num_declined, num_interested, eventid, lat, longitude)
     cur.execute('INSERT or IGNORE INTO Events VALUES (?,?,?,?,?,?,?,?,?,?)', events_info)
-
+    print('\n')
 conn.commit() 
 
 ###################################################################################
@@ -259,21 +258,27 @@ if nyt_key is None: #get token from nyt user in order to run this script
 
 #Question = where to implement range(10) in order to get 100 results
 def get_nyt_articles(subject): #creating an API request for NYT articles on a certain subject
+    y=0
     if subject in NYT_CACHE_DICTION:
        print("Data in Cache")
        return NYT_CACHE_DICTION[subject]
     else:
         print("Making new request")
         data = list()
-        for x in range(10):
-            params = {'page': x, 'api-key': nyt_key, 'q': subject,
+        t = 0
+        for x in range(0,10):
+            params = {'page':  str(x), 'api-key': nyt_key, 'q': subject,
                    'fq' : "headline(\"" + str(subject) + "\")",
                    'fl': 'headline, keywords, pub_date, news_desk'}
                    #'offset': x}
         #while x <= 3:
-            
+           
             nyt_api =  requests.get(nytbase_url, params = params)
+            print(type(json.loads(nyt_api.text)))
+            #uprint(json.loads(nyt_api.text))
             data.append(json.loads(nyt_api.text))
+
+
             #x = x + 1
             time.sleep(1) #avoid making too many requests during pagnation
 
@@ -282,8 +287,11 @@ def get_nyt_articles(subject): #creating an API request for NYT articles on a ce
             nyt_cache_file = open(NYT_CACHE, 'a')
             nyt_cache_file.write(dumped_json_cache)
             nyt_cache_file.close()
-        return NYT_CACHE_DICTION[subject]
+            t +=1
+            print(t)
 
+        return NYT_CACHE_DICTION[subject]
+        
 subj = input("Enter Search Query: ")
 articles = (get_nyt_articles(subj))
 #uprint(articles)  #type(articles) = LIST
@@ -302,40 +310,41 @@ cur.execute('CREATE TABLE Articles (date_published DATETIME, headline TEXT, quer
 cur.execute('CREATE TABLE Keywords (keyword TEXT, value INTEGER)')
 cur.execute('CREATE TABLE Sections (section TEXT, value INTEGER)')
 ###################################################################################
-
-
-
-stories = articles[0]["response"]['docs']
-#print(type(stories), type(articles))
-print(len(stories))
-s = str(stories)
-ss = re.findall('headline', s)
-print(len(ss))
-
-#Potential to add Variable for Total Hits
-
 keywords_dict = {}
 sections_dict = {}
-for item in stories:
-    headline = item["headline"]["main"]
-    print(headline)
-    publication_date = item.get("pub_date", "Date Unavaliable")
-    print(publication_date)
-    news_section = item.get("new_desk", "Section Unavaliable")
-    print(news_section)
-    if news_section != 'Section Unavaliable':
-        sections_dict[news_section] = sections_dict.get(news_section, 0) + 1
-    keywords_list = item["keywords"]
-    if len(keywords_list) != 0:
-        for piece in keywords_list:
-            words = piece['value']
-            keywords_dict[words] = keywords_dict.get(words, 0) + 1
-    stories_info = (publication_date, headline, subj, news_section, )
-    cur.execute('INSERT or IGNORE INTO Articles VALUES (?,?,?,?)', stories_info)
-#print(keywords_dict)
-#print(sections_dict)
+
+for t in articles:
+    if t['status'] == 'OK':
+        stories = t["response"]["docs"]
+        for item in stories:
+            headline = item["headline"]["main"]
+            #print(headline)
+            publication_date = item.get("pub_date", "Date Unavaliable")
+            #print(publication_date)
+            news_section = item.get("new_desk", "Section Unavaliable")
+            #print(news_section)
+            if news_section != 'Section Unavaliable':
+                sections_dict[news_section] = sections_dict.get(news_section, 0) + 1
+            keywords_list = item["keywords"]
+            if len(keywords_list) != 0:
+                for piece in keywords_list:
+                    words = piece['value']
+                    keywords_dict[words] = keywords_dict.get(words, 0) + 1
+            stories_info = (publication_date, headline, subj, news_section, )
+            cur.execute('INSERT or IGNORE INTO Articles VALUES (?,?,?,?)', stories_info)
+    else:
+        continue
+#stories = articles[0]["response"]['docs']
+#print(type(stories), type(articles))
+#print(len(stories))
+#s = str(stories)
+#ss = re.findall('headline', s)
+#print(len(ss))
+
+
 sorted_keywords = [(a, keywords_dict[a]) for a in sorted(keywords_dict,
                     key = keywords_dict.get, reverse = True)]
+
 for k, v in sorted_keywords:
     #print(k, v)
     g = (k,v)
@@ -354,3 +363,4 @@ conn.commit()
 
 ###############################################################
 ###########################################################
+#Potential to add Variable for Total Hits
