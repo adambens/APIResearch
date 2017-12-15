@@ -1,4 +1,8 @@
 import json
+import pandas as pd #for Reddit Visualization
+import plotly #for Reddit Visualization
+import plotly.plotly as py
+import plotly.graph_objs as go 
 from mpl_toolkits.basemap import Basemap #Visualization, importing map (using Miller Project world map)
 import numpy as np #Visualization
 import matplotlib.pyplot as plt #Visualization
@@ -29,6 +33,9 @@ wmap.drawcoastlines() #draws coastlines
 wmap.drawcountries(color='beige')
 wmap.fillcontinents(lake_color='cyan')
 wmap.drawmapboundary(fill_color='cyan')
+
+plotly.tools.set_credentials_file(username='adambens', api_key = 'HlNmUvXljCgx9vTiKigd')
+
 
 ######## PRINTING FUNCTION FOR CODEC ISSUES #########################################
 def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
@@ -164,12 +171,33 @@ for sub in subreddit: #for submission in top 100 submissions in specified subred
 print(count)
 conn.commit()
 
-times = []
+
+###################################################################################
+## REDDIT VISUALIZATION COMPONENT USING PANDAS AND PLOTLY #########################
+###################################################################################
+cur.execute('SELECT score, creation_date from Submissions')
+p = cur.fetchall()
+df = pd.DataFrame([[x for x in y] for y in p])
+df.rename(columns={0: 'Score', 1: 'CreationDate'}, inplace = True)
 
 
+trace1 = go.Scatter(
+    x=df['CreationDate'],
+    y = df['Score'],
+    mode = 'markers')
+
+layout = go.Layout(
+    title = 'Reddit Submissions Score vs Date',
+    xaxis = go.XAxis(title = 'Creation Date'),
+    yaxis = go.YAxis(title = 'Submission Score'))
+
+data = [trace1]
+fig = dict(data= data, layout=layout)
+py.iplot(fig, filename='Reddit Submissions')
 cur.close()
 conn.close()
 
+print('Reddit Visualization Success')
 ###################################################################################
 ###################################################################################
 ###################################################################################
@@ -217,7 +245,6 @@ cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Events')
 cur.execute('CREATE TABLE Events (event_date DATETIME, description TEXT, attending INTEGER, city TEXT, country TEXT, declined INTEGER, interested INTEGER, eventid INTEGER PRIMARY KEY, latitude REAL, longitude REAL)')
 ###################################################################################
-#CREATE DICTIONARY TO STORE RESULTS
 
 for x in eventslist: #For all the events that match the search query
     eventid = x['id'] #event id = unique identifier to access more information on the event
@@ -273,11 +300,11 @@ while l < len(lats):
     xpt,ypt = wmap(longs[l], lats[l])
     wmap.plot(xpt, ypt, "d", markersize=15)
     l += 1
-plt.title('Fundraiser Events')
+plt.title('Facebook Events')
 plt.show()
 cur.close()
 conn.close()
-
+print('Facebook Visualization Success')
 ###################################################################################
 ###################################################################################
 #API #3: New York Times
@@ -398,6 +425,7 @@ sorted_sections = [(a, sections_dict[a]) for a in sorted(sections_dict,
                     key = sections_dict.get, reverse = True)]
 print('\n')
 
+print('Sorted News Sections: ')
 for c, d in sorted_sections:
     print(c, d)
     b = (c,d)
@@ -405,7 +433,7 @@ for c, d in sorted_sections:
 #printing sections based on value
 conn.commit()
 
-keyword_wordcloud = WordCloud(background_color="white", max_font_size=40, min_font_size = 12, max_words = 100, width = 800, height =800).generate_from_frequencies(keywords_dict)
+keyword_wordcloud = WordCloud(background_color="black", max_font_size=60, min_font_size = 12, max_words = 100, width = 800, height =800).generate_from_frequencies(keywords_dict)
 #plt.figure.Figure()
 plt.imshow(keyword_wordcloud, interpolation="bilinear")
 plt.axis("off")
@@ -413,11 +441,8 @@ plt.show()
 cur.close()
 conn.close()
 
-###PLotly Visualiation Component
-#CUR SELECT from Keywords and Sections. For Keywords, create bar chart
-#for Sections, create pie chart
-
-
+print('NYTimes Visualization Success')
+print('End of Final Project')
 ###############################################################
-###########################################################
-#Potential to add Variable for Total Hits
+###############################################################
+
