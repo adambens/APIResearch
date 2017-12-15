@@ -1,21 +1,34 @@
 import json
-import sqlite3
-import matplotlib.pyplot as plt 
-from wordcloud import WordCloud
+from mpl_toolkits.basemap import Basemap #Visualization, importing map (using Miller Project world map)
+import numpy as np #Visualization
+import matplotlib.pyplot as plt #Visualization
+from wordcloud import WordCloud #World Cloud Visualization
 import urllib.request, urllib.parse, urllib.error
 import facebook
-import praw
+import praw #Reddit python wrapper
 import requests
 import hiddeninfo
 import sys
 import datetime
-import time
-import re
-
+import time #for NYT rate-limit
+import re 
+import sqlite3
 #Adam Benson
 #Final Project
-#Purpose: Using API's to collect interactions on various platforms.
-#Goals: visualize the data to gain insights 
+#Purpose: Using 3 API's, Reddit, Facebook, and New York Times to collect interactions on various platforms.
+#Goals: Visualize the data to gain insights 
+#####################################################################################
+#CREATING BASE MAP FOR FB VISUALIZATION#
+
+wmap = Basemap(projection='mill',llcrnrlat=-90,urcrnrlat=90,\
+            llcrnrlon=-180,urcrnrlon=180,resolution='c')
+# resolution set to crude
+# lat/lon values *llcrnrlat = lower left corner lat, set up values for lower left and upper right corners
+wmap.drawcoastlines() #draws coastlines
+#wmap.drawcountries() #draws countries
+wmap.drawcountries(color='beige')
+wmap.fillcontinents(lake_color='cyan')
+wmap.drawmapboundary(fill_color='cyan')
 
 ######## PRINTING FUNCTION FOR CODEC ISSUES #########################################
 def uprint(*objects, sep=' ', end='\n', file=sys.stdout):
@@ -63,7 +76,7 @@ except:
 #This portion requires that a USER has a Reddit account
 #User must generate client information via Reddit account
 #Enter user information when prompted to
-#This function will retrieve up to 100 of the top non-stickied submissions of the specified subreddit
+#This function will retrieve up to 100 of the top, non-stickied, submissions of the specified subreddit
 #I was interested in 'bigdata', but wrote this function to match any existing subreddit
 
 print("Welcome to the Reddit Analysis Portion of the project")
@@ -109,7 +122,7 @@ def get_subreddit_submissions(subred): #retrieve submissions for subreddit
 redditinput = input("Enter subreddit 'ex)bigdata' : ")
 subreddit = get_subreddit_submissions(redditinput) #big data subreddit
 #print("subreddit title: ", subreddit.title)
-print(type(subreddit)) #type = praw_object
+#print(type(subreddit)) #type = praw_object
 count = 0
 
 ###################################################################################
@@ -150,6 +163,12 @@ for sub in subreddit: #for submission in top 100 submissions in specified subred
         cur.execute('INSERT or IGNORE INTO Submissions VALUES (?,?,?,?,?,?,?)', sub_info)
 print(count)
 conn.commit()
+
+times = []
+
+
+cur.close()
+conn.close()
 
 ###################################################################################
 ###################################################################################
@@ -239,9 +258,25 @@ for x in eventslist: #For all the events that match the search query
     print('\n')
 conn.commit() 
 
-
 ###Fb Visualization component
-## Countrys, map! or pie chart for occurences of countries
+## Creating a Map of events listed for search query
+cur.execute('SELECT latitude from EVENTS')
+k= cur.fetchall()
+lats = [int(x[0]) for x in k]
+cur.execute('SELECT longitude from EVENTS')
+w = cur.fetchall()
+longs = [int(x[0]) for x in w]
+
+l=0
+
+while l < len(lats):
+    xpt,ypt = wmap(longs[l], lats[l])
+    wmap.plot(xpt, ypt, "d", markersize=15)
+    l += 1
+plt.title('Fundraiser Events')
+plt.show()
+cur.close()
+conn.close()
 
 ###################################################################################
 ###################################################################################
@@ -292,7 +327,7 @@ def get_nyt_articles(subject): #creating an API request for NYT articles on a ce
 
             NYT_CACHE_DICTION[subject] = data
             dumped_json_cache = json.dumps(NYT_CACHE_DICTION)
-            nyt_cache_file = open(NYT_CACHE, 'a')
+            nyt_cache_file = open(NYT_CACHE, 'w')
             nyt_cache_file.write(dumped_json_cache)
             nyt_cache_file.close()
             t +=1
@@ -368,13 +403,15 @@ for c, d in sorted_sections:
     b = (c,d)
     cur.execute('INSERT or IGNORE INTO Sections VALUES (?,?)', b)
 #printing sections based on value
-#conn.commit()
+conn.commit()
 
 keyword_wordcloud = WordCloud(background_color="white", max_font_size=40, min_font_size = 12, max_words = 100, width = 800, height =800).generate_from_frequencies(keywords_dict)
 #plt.figure.Figure()
 plt.imshow(keyword_wordcloud, interpolation="bilinear")
 plt.axis("off")
 plt.show()
+cur.close()
+conn.close()
 
 ###PLotly Visualiation Component
 #CUR SELECT from Keywords and Sections. For Keywords, create bar chart
